@@ -1,0 +1,40 @@
+[tool.black]
+line-length = 80
+target-version = ["py312"]
+exclude = '/(\\.venv|venv|\\.git|\\.mypy_cache|\\.pytest_cache|build|dist)/'
+
+[tool.isort]
+profile = "black"
+line_length = 80
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+skip = [".venv", "venv", "build", "dist", ".git"]
+
+[tool.flake8]
+max-line-length = 80
+extend-ignore = [
+    "E203",  # whitespace before ':'
+    "E501",  # line too long (handled by black)
+    "W503",  # line break before binary operator
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+    ".eggs",
+]
+per-file-ignores = [
+    "__init__.py:F401",  # imported but unused
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

@@ -1,0 +1,40 @@
+[flake8]
+# largura de linha
+max-line-length = 80
+
+# Para compatibilidade com Black
+# E203: whitespace before ':'
+# E501: line too long
+# W503: line break before binary operator
+ignore = E203,W503
+
+# Seleções (inclui plugins):
+# regras/plugins que serão aplicados (B=bugbear, C=complexidade, E=pep8, F=pyflakes, N=pep8-naming, W=warnings, D=docstrings)
+select = B,C,E,F,N,W,D
+
+# complexidade ciclomatica padrão razoável:
+# (quantidade de caminhos de execução possíveis)
+max-complexity = 10
+
+# excluir diretórios comuns
+exclude = .git,__pycache__,.venv,venv,build,dist
+
+# docstrings: usar convenção do Google (via flake8-docstrings/pydocstyle)
+docstring-convention = google
+# Exemplo de convenção do Google para docstrings:
+# """Add two integers.
+#
+#    Args:
+#        a (int): The first number.
+#        b (int): The second number.
+#
+#    Returns:
+#        int: The sum of `a` and `b`.
+#
+#    Raises:
+#        ValueError: If any argument is not an integer.
+# """
+
+# pep8-naming (N8xx) ajuda a manter snake_case para funções/métodos/variáveis
+# D100..D107 (pydocstyle) exigem docstring em módulo, classe, método, função
+# Não adicionamos per-file-ignores para __init__.py para manter a exigência em TODO arquivo.
