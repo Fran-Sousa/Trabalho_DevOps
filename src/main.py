@@ -5,7 +5,7 @@ app = FastAPI()
 
 
 @app.get("/")
-def root():
+async def root():
     """Root endpoint returning a welcome message."""
     return "Welcome to Task Manager API"
 
