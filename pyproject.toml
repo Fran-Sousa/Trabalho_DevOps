@@ -18,6 +18,7 @@ extend-ignore = [
     "E203",  # whitespace before ':'
     "E501",  # line too long (handled by black)
     "W503",  # line break before binary operator
+    "D104",  # missing docstring in public package
 ]
 exclude = [
     ".git",
