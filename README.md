@@ -1,4 +1,4 @@
-# Gerenciador de Tarefas - DevOps
+# Gerenciador de Tarefas - DevOps.
 
 Um sistema completo de gerenciamento de tarefas desenvolvido como projeto prático para a disciplina de DevOps e Integração Contínua, implementando um pipeline DevOps completo com todas as práticas modernas de desenvolvimento.
 
