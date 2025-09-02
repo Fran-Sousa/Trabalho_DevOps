@@ -1,3 +1,3 @@
+"""Módulo responsável pela definição e manipulação de tarefas.
 """
-Módulo responsável pela definição e manipulação de tarefas.
-"""
+
