@@ -1,3 +1,3 @@
+"""Módulo responsável pelas funcionalidades relacionadas a usuários.
 """
-Módulo responsável pelas funcionalidades relacionadas a usuários.
-"""
+
