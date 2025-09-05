@@ -1,7 +1,12 @@
 """Main application file for the FastAPI web service."""
 from fastapi import FastAPI
 
-app = FastAPI()
+try:
+    from .config import get_settings
+    settings = get_settings()
+    app = FastAPI(debug=settings.debug)
+except ImportError:
+    app = FastAPI()
 
 
 @app.get("/")

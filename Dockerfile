@@ -50,6 +50,9 @@ EXPOSE 8001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8001/health || exit 1
 
+# Set entrypoint
+ENTRYPOINT ["./entrypoint.sh"]
+
 # Development command with hot reload
 CMD ["fastapi", "dev", "src/main.py", "--host", "0.0.0.0", "--port", "8001"]
 
@@ -83,6 +86,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY --chown=app:app src/ src/
 COPY --chown=app:app pyproject.toml .
+COPY --chown=app:app migrate.py .
+COPY --chown=app:app entrypoint.sh .
+COPY --chown=app:app alembic.ini .
+COPY --chown=app:app migrations/ migrations/
+
+# Make entrypoint executable
+RUN chmod +x entrypoint.sh
 
 # Switch to non-root user
 USER app
@@ -93,6 +103,9 @@ EXPOSE 8000
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
+
+# Set entrypoint
+ENTRYPOINT ["./entrypoint.sh"]
 
 # Production command
 CMD ["fastapi", "run", "src/main.py", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

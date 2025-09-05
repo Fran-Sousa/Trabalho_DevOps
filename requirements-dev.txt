@@ -18,3 +18,4 @@ httpx==0.26.0
 # Development utilities
 watchfiles==0.21.0
 ipdb==0.13.13
+python-dotenv==1.0.0

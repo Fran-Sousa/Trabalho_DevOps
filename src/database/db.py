@@ -14,12 +14,18 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 
-"""teste"""
-project_root = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-)
-db_path = os.path.join(project_root, "src", "database", "exemplo.db")
-engine = create_engine(f"sqlite:///{db_path}", echo=True)
+try:
+    from ..config import get_settings
+    settings = get_settings()
+    DATABASE_URL = settings.database_url
+except ImportError:
+    project_root = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
+    db_path = os.path.join(project_root, "src", "database", "exemplo.db")
+    DATABASE_URL = f"sqlite:///{db_path}"
+
+engine = create_engine(DATABASE_URL, echo=True)
 
 Base = declarative_base()
 
@@ -67,7 +73,12 @@ class Task(Base):
         )
 
 
-Base.metadata.create_all(engine)
+# Database initialization moved to migrations
+# Use: alembic upgrade head
 
 Session = sessionmaker(bind=engine)
-session = Session()
+
+
+def get_session():
+    """Get database session."""
+    return Session()
