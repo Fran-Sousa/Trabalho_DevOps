@@ -134,31 +134,80 @@ Frontend (Swagger UI) ←→ API REST (FastAPI) ←→ Banco de Dados
    cd trabalho-devops
    ```
 
-2. **Abra no VS Code**
+2. **Configure o ambiente de desenvolvimento (opcional)**
+
+   ```bash
+   # Copie o arquivo de configuração de exemplo
+   cp .env.example .env
+   ```
+
+3. **Abra no VS Code**
 
    ```bash
    code .
    ```
 
-3. **Inicialize o Dev Container**
+4. **Inicialize o Dev Container**
 
    - Pressione `Ctrl+Shift+P` (ou `Cmd+Shift+P` no Mac)
    - Digite: `Dev Containers: Reopen in Container`
    - Aguarde o container ser construído (primeira vez pode demorar alguns minutos)
 
-4. **Execute a aplicação**
+5. **Execute as migrações do banco de dados**
 
    No terminal integrado do VS Code (já dentro do container):
+
+   ```bash
+   # Execute as migrações do banco de dados
+   python migrate.py upgrade
+   ```
+
+6. **Execute a aplicação**
 
    ```bash
    # A aplicação inicia automaticamente, mas se precisar executar manualmente:
    fastapi dev src/main.py --host 0.0.0.0 --port 8001
    ```
 
-5. **Acesse a aplicação**
+6. **Acesse a aplicação**
    - **API**: `http://localhost:8001`
    - **Documentação Swagger**: `http://localhost:8001/docs`
    - **Health Check**: `http://localhost:8001/health`
+
+## 🗄️ Gerenciamento do Banco de Dados
+
+### Migrações (No Dev Container)
+
+```bash
+# No terminal do VS Code dentro do dev container:
+
+# Executar todas as migrações pendentes
+python migrate.py upgrade
+
+# Criar uma nova migração
+python migrate.py create "Adicionar nova coluna na tabela users"
+
+# Verificar migração atual
+python migrate.py current
+
+# Ver histórico de migrações
+python migrate.py history
+
+# Reverter uma migração
+python migrate.py downgrade
+```
+
+### Executando com Docker
+
+```bash
+# Build e execução com migrações automáticas
+docker build --target development -t task-manager-dev .
+docker run -p 8001:8001 task-manager-dev
+
+# Para desenvolvimento direto
+docker build --target production -t task-manager-prod .
+docker run -p 8000:8000 task-manager-prod
+```
 
 ## 🧪 Testes
 
