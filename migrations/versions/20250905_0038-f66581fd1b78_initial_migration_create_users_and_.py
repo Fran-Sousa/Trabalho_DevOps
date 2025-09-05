@@ -1,16 +1,14 @@
-"""Initial migration: create users and tasks tables
+"""Initial migration: create users and tasks tables.
 
 Revision ID: f66581fd1b78
 Revises:
 Create Date: 2025-09-05 00:38:03.461223+00:00
-
 """
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "f66581fd1b78"

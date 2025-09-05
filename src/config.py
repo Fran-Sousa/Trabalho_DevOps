@@ -3,6 +3,7 @@ import os
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
     DOTENV_AVAILABLE = True
 except ImportError:
@@ -15,7 +16,7 @@ class Settings:
     def __init__(self):
         """Config initialization."""
         self.database_url: str = os.getenv(
-            "DATABASE_URL", "sqlite:///exemplo.db"
+            "DATABASE_URL", "sqlite:///src/database/dev.db"
         )
         self.debug: bool = os.getenv("DEBUG", "false").lower() == "true"
         self.host: str = os.getenv("HOST", "0.0.0.0")

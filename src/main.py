@@ -1,12 +1,18 @@
 """Main application file for the FastAPI web service."""
 from fastapi import FastAPI
 
+from .routes import users
+
 try:
     from .config import get_settings
+
     settings = get_settings()
     app = FastAPI(debug=settings.debug)
 except ImportError:
     app = FastAPI()
+
+# Include routers
+app.include_router(users.router)
 
 
 @app.get("/")

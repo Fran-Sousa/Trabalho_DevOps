@@ -11,23 +11,27 @@ from sqlalchemy import (
     String,
     create_engine,
 )
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, relationship, sessionmaker
 
 try:
     from ..config import get_settings
+
     settings = get_settings()
     DATABASE_URL = settings.database_url
 except ImportError:
     project_root = os.path.dirname(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     )
-    db_path = os.path.join(project_root, "src", "database", "exemplo.db")
+    db_path = os.path.join(project_root, "src", "database", "dev.db")
     DATABASE_URL = f"sqlite:///{db_path}"
 
 engine = create_engine(DATABASE_URL, echo=True)
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    """Base model."""
+
+    pass
 
 
 class User(Base):
