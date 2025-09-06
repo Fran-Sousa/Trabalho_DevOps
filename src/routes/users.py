@@ -4,9 +4,11 @@ from typing import List
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..database.db import get_session
+from ..models import User
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -37,7 +39,12 @@ class UserResponse(BaseModel):
 @router.get("/", response_model=List[UserResponse])
 async def get_users(session: Session = Depends(get_session)):
     """Get all users."""
-    pass
+    statement = select(User)
+
+    result = session.execute(statement)
+    users = result.scalars().all()
+
+    return users
 
 
 @router.get("/{user_id}", response_model=UserResponse)
