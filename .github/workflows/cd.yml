@@ -1,0 +1,121 @@
+name: ToDo CD (ECR + ECS Fargate via CDK)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION:  ${{ secrets.AWS_REGION }}
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  CDK_STACK_NAME: ${{ secrets.CDK_STACK_NAME }}
+  IMAGE_TAG: ${{ github.ref_name }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (access keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Quem sou eu?
+        run: aws sts get-caller-identity
+      
+      - name: Ensure ECR repository exists
+        run: |
+          set -euo pipefail
+          if ! aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" >/dev/null 2>&1; then
+            echo "ECR repo '$ECR_REPOSITORY' not found. Creating..."
+            aws ecr create-repository --repository-name "$ECR_REPOSITORY" \
+              --image-scanning-configuration scanOnPush=true \
+              --encryption-configuration encryptionType=AES256 \
+              >/dev/null
+          else
+            echo "ECR repo '$ECR_REPOSITORY' already exists."
+          fi
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image (prod)
+        run: |
+          docker build \
+            --target prod \
+            -t "$ECR_REPOSITORY:latest" \
+            -t "$ECR_REPOSITORY:$IMAGE_TAG" \
+            -f Dockerfile .
+
+      - name: Push to ECR
+        run: |
+          set -euo pipefail
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          REGISTRY="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+          docker tag "$ECR_REPOSITORY:$IMAGE_TAG" "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker tag "$ECR_REPOSITORY:latest"    "$REGISTRY/$ECR_REPOSITORY:latest"
+          docker push "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker push "$REGISTRY/$ECR_REPOSITORY:latest"
+          echo "REGISTRY=$REGISTRY" >> "$GITHUB_ENV"
+  
+  cdk-deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configura credenciais da AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Quem sou eu?
+        run: aws sts get-caller-identity
+      
+      - name: Export AWS_DEFAULT_REGION (para CDK)
+        run: echo "AWS_DEFAULT_REGION=${{ env.AWS_REGION }}" >> $GITHUB_ENV
+
+      - name: Setup Node (CDK CLI)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install CDK
+        run: npm install -g aws-cdk@2
+
+      - name: Install CDK app deps
+        working-directory: infra
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: CDK Synth
+        working-directory: infra
+        run: |
+          cdk synth \
+            --context imageTag="${{ env.IMAGE_TAG }}"
+
+      - name: Deploy do CDK
+        working-directory: infra
+        run: |
+          cdk deploy "${{ env.CDK_STACK_NAME }}" \
+            --context imageTag="${{ env.IMAGE_TAG }}" \
+            --require-approval never
