@@ -49,10 +49,10 @@ jobs:
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build Docker image (prod)
+      - name: Build Docker image (production)
         run: |
           docker build \
-            --target prod \
+            --target production \
             -t "$ECR_REPOSITORY:latest" \
             -t "$ECR_REPOSITORY:$IMAGE_TAG" \
             -f Dockerfile .
