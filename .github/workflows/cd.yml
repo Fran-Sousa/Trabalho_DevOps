@@ -119,3 +119,32 @@ jobs:
           cdk deploy "${{ env.CDK_STACK_NAME }}" \
             --context imageTag="${{ env.IMAGE_TAG }}" \
             --require-approval never
+
+      - name: Get API URL
+        run: |
+          # Aguarda alguns segundos para task ficar ready
+          sleep 30
+
+          # Obtém os nomes do cluster e service do CloudFormation
+          CLUSTER_NAME=$(aws cloudformation describe-stacks --stack-name "${{ env.CDK_STACK_NAME }}" --query 'Stacks[0].Outputs[?OutputKey==`ClusterName`].OutputValue' --output text 2>/dev/null || echo "")
+          SERVICE_NAME=$(aws cloudformation describe-stacks --stack-name "${{ env.CDK_STACK_NAME }}" --query 'Stacks[0].Outputs[?OutputKey==`ServiceName`].OutputValue' --output text 2>/dev/null || echo "")
+
+          # Se não encontrou nos outputs, usa describe-stacks para pegar os recursos
+          if [ -z "$CLUSTER_NAME" ] || [ -z "$SERVICE_NAME" ]; then
+            CLUSTER_ARN=$(aws cloudformation describe-stack-resources --stack-name "${{ env.CDK_STACK_NAME }}" --query 'StackResources[?ResourceType==`AWS::ECS::Cluster`].PhysicalResourceId' --output text)
+            CLUSTER_NAME=$(echo $CLUSTER_ARN | cut -d'/' -f2)
+            SERVICE_ARN=$(aws cloudformation describe-stack-resources --stack-name "${{ env.CDK_STACK_NAME }}" --query 'StackResources[?ResourceType==`AWS::ECS::Service`].PhysicalResourceId' --output text)
+            SERVICE_NAME=$(echo $SERVICE_ARN | cut -d'/' -f3)
+          fi
+
+          echo "🔍 Obtendo IP público da API..."
+          PUBLIC_IP=$(aws ecs describe-tasks --cluster $CLUSTER_NAME --tasks $(aws ecs list-tasks --cluster $CLUSTER_NAME --service-name $SERVICE_NAME --query 'taskArns[0]' --output text) --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' --output text | xargs -I {} aws ec2 describe-network-interfaces --network-interface-ids {} --query 'NetworkInterfaces[0].Association.PublicIp' --output text)
+
+          if [ ! -z "$PUBLIC_IP" ] && [ "$PUBLIC_IP" != "None" ]; then
+            echo "✅ API disponível em: http://$PUBLIC_IP:8000"
+            echo "📝 Documentação: http://$PUBLIC_IP:8000/docs"
+          else
+            echo "⚠️  Não foi possível obter o IP público. A task pode ainda estar iniciando."
+            echo "📋 Use este comando para obter o IP posteriormente:"
+            echo "aws ecs describe-tasks --cluster $CLUSTER_NAME --tasks \$(aws ecs list-tasks --cluster $CLUSTER_NAME --service-name $SERVICE_NAME --query 'taskArns[0]' --output text) --query 'tasks[0].attachments[0].details[?name==\`networkInterfaceId\`].value' --output text | xargs -I {} aws ec2 describe-network-interfaces --network-interface-ids {} --query 'NetworkInterfaces[0].Association.PublicIp' --output text"
+          fi
